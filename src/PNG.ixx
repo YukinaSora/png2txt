@@ -37,18 +37,40 @@ typedef array<size_t, 2> pos_t;
 
 class PNG
 {
+private:
+	struct Options
+	{
+		string filename;
+		string output_path;
+		bool enable_output_txt = false;
+		bool enable_output_html_ascii = false;
+		bool enable_output_html_canvas = false;
+	};
+
 public:
-	PNG(const char* filename, const char* output_path)
-		: m_output_path{ output_path }, m_img { }, m_buffer{ }
-		, m_size { 0 }, m_width{ 0 }, m_height{ 0 }
+	PNG()
+		: m_img{ }, m_buffer{ }
+		, m_size{ 0 }, m_width{ 0 }, m_height{ 0 }
 		, m_bit_depth{ 0 }, m_color_type{ 0 }
 		, m_compression_method{ 0 }, m_filter_method{ 0 }
 		, m_interlace_method{ 0 }, m_pixel_size{ 0 }
 		, m_pos{ 0 }, m_read_size{ 0 }
-		, m_chunk_length{ 0 }, m_chunk_type { }, m_data { }
+		, m_chunk_length{ 0 }, m_chunk_type{ }, m_data{ }
 		, m_compressed_data{ }, m_decompressed_data{ }
 		, m_color_data{ }
 		, m_output{ }
+	{ }
+
+	PNG(const char* filename, const char* output_path)
+		: PNG()
+	{
+		open(filename);
+	}
+
+	PNG(const string filename, const string output_path)
+	{ }
+
+	void open(const string filename)
 	{
 		// binary: read file as binary instead of text
 		m_img = ifstream{ filename, std::ios::binary };
@@ -63,19 +85,46 @@ public:
 		m_img.seekg(0, std::ios::end);
 		m_size = m_img.tellg();
 		m_img.seekg(0, std::ios::beg);
+
+		m_options.filename = filename;
 	}
 
-	PNG(const string filename, const string output_path)
-		: PNG(filename.c_str(), output_path.c_str())
-	{ }
+	void load(const string filename)
+	{
+		open(filename);
+	}
+
+	void save_to(const string output_path)
+	{
+		m_options.output_path = output_path;
+	}
+
+	void enable_output_txt(bool enable = true)
+	{
+		m_options.enable_output_txt = enable;
+	}
+
+	void enable_output_html_ascii(bool enable = true)
+	{
+		m_options.enable_output_html_ascii = enable;
+	}
+
+	void enable_output_html_canvas(bool enable = true)
+	{
+		m_options.enable_output_html_canvas = enable;
+	}
 
 	void convert()
 	{
+		if (!m_size) return;
+
 		cout << "File size: " << m_size << endl;
 
 		read();
 
 		output();
+
+		m_img.close();
 	}
 
 private:
@@ -94,59 +143,134 @@ private:
 	void output()
 	{
 		// get parent directory of output file
-		string dir = m_output_path;
+		string dir = m_options.output_path;
 		std::filesystem::create_directory(dir);
 
-		string out_txt = dir + "\\output.txt";
-		string out_html = dir + "\\output.html";
+		if (m_options.enable_output_txt)		 output_txt();
+		if (m_options.enable_output_html_ascii)  output_html_acsii();
+		if (m_options.enable_output_html_canvas) output_html_canvas();
 
-		ofstream out(out_txt);
-		ofstream html(out_html);
+		return;
+	}
 
-		html << "<!DOCTYPE html>\n"
-				"<html class='scrollable' style='background-color: black; '>\n"
-				"	<head>\n"
-				"		<title>PNG to TXT</title>\n"
-				"	</head>\n"
-				"	<body>\n"
-				"		<pre style=\"line-height:8px; font-size: 8px;\">\n";
+	void output_txt()
+	{
+		string out = m_options.output_path + "\\ascii.txt";
+		ofstream os(out);
 
 		size_t i = 0;
 		for (size_t y = 0; y < m_height; ++y)
 		{
 			for (size_t x = 0; x < m_width; ++x)
 			{
-				out << m_output[i] << m_output[i];
-				html << string("<span"
-								" style = 'color: "
-								) 
-								+ rgba_to_color(m_color_data[i])
-								+ ";font-size-adjust:1;'>"
-								//+ ";letter-spacing: 2px;'>"
-					 << m_output[i] 
-					 //<< m_output[i]
-					 //<< "¡ö"
-					 << string("</span>");
+				os << m_output[i] << m_output[i];
 				i++;
 			}
-			out << endl;
-			html << "<br>";
+			os << endl;
+		}
+
+		os.close();
+
+		cout << "Output txt file to " << out << endl;
+	}
+
+	void output_html_acsii()
+	{
+		string out = m_options.output_path + "\\ascii.html";
+		ofstream os(out);
+
+		os <<
+		 R"(<!DOCTYPE html>
+			  <html class='scrollable' style='background-color: black; '>
+			  	<head>
+			  		<title>PNG to TXT</title>
+			  	</head>
+			  	<body>
+			  		<pre style="line-height:6px; font-size: 6px;">
+			)";
+
+		size_t i = 0;
+		for (size_t y = 0; y < m_height; ++y)
+		{
+			for (size_t x = 0; x < m_width; ++x)
+			{
+				os << string("<span"
+					" style = 'color: "
+				)
+					+ rgba_to_color(m_color_data[i])
+					+ ";font-size-adjust:1;'>"
+					//+ ";letter-spacing: 2px;'>"
+					//<< m_output[i] 
+					<< m_output[i]
+					//<< "¡ö"
+					<< string("</span>");
+				i++;
+			}
+			os << "<br>";
 			//cout << endl;
 		}
 
-		html << "		</pre>\n"
-				"	</body>\n"
-				"   <style>\n"
-				"	   .scrollable::-webkit-scrollbar { display: none; }\n"
-				"   </style>\n"
-				"</html>\n";
+		os << 
+		 R"(		</pre>
+				</body>
+			    <style>
+					.scrollable::-webkit-scrollbar { display: none; }
+				</style>
+			</html>
+			)";
 
-		out.close();
-		html.close();
+		os.close();
+
+		cout << "Output html file to " << out << endl;
+	}
+
+	void output_html_canvas()
+	{
+		string out = m_options.output_path + "\\canvas.html";
+		ofstream os(out);
+
+		std::vector<uint8_t> pixel_data;
+		for (auto& rgba : m_color_data) {
+			pixel_data.insert(pixel_data.end(), { rgba[0], rgba[1], rgba[2], rgba[3] });
+		}
+		string base64_data = base64_encode(pixel_data.data(), pixel_data.size());
 		
-		cout << "Output(" << dec << m_output.size() << " bytes) written to " << out_html << endl;
+		os << 
+		 R"(<!DOCTYPE html>
+			<html class='scrollable'>
+				<head>
+					<title>PNG to TXT</title>
+				</head>
+				<body>
+					<canvas id='pixelCanvas'></canvas>
+					<script>
+						const data = ')" << base64_data << R"(';
+						const canvas = document.getElementById('pixelCanvas');
+						canvas.width  = )" << m_width  << R"(;
+						canvas.height = )" << m_height << R"(;
+						const ctx = canvas.getContext('2d');
+						const imageData = ctx.createImageData(canvas.width, canvas.height);
 
-		return;
+						const decoded = atob(data);
+						const uintArray = new Uint8Array(decoded.length);
+						for (let i = 0; i < decoded.length; i++) {
+							uintArray[i] = decoded.charCodeAt(i);
+						}
+						imageData.data.set(uintArray);
+						ctx.putImageData(imageData, 0, 0);
+
+						canvas.style.width = (canvas.width * 4) + 'px';
+						canvas.style.imageRendering = 'pixelated';
+					</script>
+					<style>
+						.scrollable::-webkit-scrollbar { display: none; }
+						canvas { border: none; margin-top: 20px; }
+					</style>
+				</body>
+			</html>
+			)";
+
+		cout << "Output canvas file to " << out << endl;
 	}
 
 	void read_for(size_t size = 0, bool clear_data = true)
@@ -226,10 +350,10 @@ private:
 		visit_data([&](byte b, size_t i) {
 			m_chunk_type[i] = b;
 		});
-		cout << "Reading ";
-		print_string(m_chunk_type);
-		cout << " Chunk(" << dec << m_chunk_length << " bytes)";
-		cout << endl;
+		//cout << "Reading ";
+		//print_string(m_chunk_type);
+		//cout << " Chunk(" << dec << m_chunk_length << " bytes)";
+		//cout << endl;
 
 
 		// read chunk data
@@ -753,6 +877,47 @@ private:
 		return static_cast<int>(a + .5f);
 	}
 
+	string base64_encode(const unsigned char* data, size_t len)
+	{
+		static const char* base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+		string ret;
+		int i = 0;
+		int j = 0;
+		unsigned char char_array_3[3];
+		unsigned char char_array_4;
+
+		while (len--) {
+			char_array_3[i++] = *(data++);
+			if (i == 3) {
+				char_array_4 = (char_array_3[0] & 0xfc) >> 2;
+				ret += base64_chars[char_array_4];
+				char_array_4 = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+				ret += base64_chars[char_array_4];
+				char_array_4 = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+				ret += base64_chars[char_array_4];
+				char_array_4 = char_array_3[2] & 0x3f;
+				ret += base64_chars[char_array_4];
+				i = 0;
+			}
+		}
+
+		if (i) {
+			for (j = i; j < 3; j++) {
+				char_array_3[j] = '\0';
+			}
+
+			char_array_4 = (char_array_3[0] & 0xfc) >> 2;
+			ret += base64_chars[char_array_4];
+			char_array_4 = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+			ret += base64_chars[char_array_4];
+			ret += (i > 1) ? base64_chars[((char_array_3[1] & 0x0f) << 2)] : '=';
+			ret += '=';
+		}
+
+		return ret;
+	}
+
 public:
 	constexpr static size_t buffer_size = 1 << 10 << 7; // 128KB
 
@@ -806,7 +971,7 @@ private:
 	};
 
 private:
-	string m_output_path;
+	Options m_options;
 
 	ifstream m_img;
 	byte_array m_buffer;			// buffer for reading
