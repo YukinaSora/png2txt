@@ -43,13 +43,13 @@
 ### 生成所有格式
 
 ```bash
-./png2txt -f input.png --txt --html --canvas
+png2txt -f input.png --txt --html --canvas
 ```
 
 ### 指定输出目录
 
 ```bash
-./png2txt -f input.png -o ./output/ --canvas
+png2txt -f input.png -o ./output/ --canvas
 ```
 
 ------
@@ -61,14 +61,6 @@
 - C++20 编译器 (GCC 11+/Clang 14+/MSVC 2022+)
 - libpng 1.6+
 - CMake 3.20+
-
-### 编译命令
-
-```bash
-mkdir build && cd build
-cmake ..
-make
-```
 
 ------
 
