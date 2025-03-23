@@ -38,8 +38,8 @@ typedef array<size_t, 2> pos_t;
 class PNG
 {
 public:
-	PNG(const char* path = img)
-		: m_img{ }, m_buffer{ }
+	PNG(const char* filename, const char* output_path)
+		: m_output_path{ output_path }, m_img { }, m_buffer{ }
 		, m_size { 0 }, m_width{ 0 }, m_height{ 0 }
 		, m_bit_depth{ 0 }, m_color_type{ 0 }
 		, m_compression_method{ 0 }, m_filter_method{ 0 }
@@ -51,10 +51,10 @@ public:
 		, m_output{ }
 	{
 		// binary: read file as binary instead of text
-		m_img = ifstream{ path, std::ios::binary };
+		m_img = ifstream{ filename, std::ios::binary };
 		if (!m_img)
 		{
-			cerr << "Error: Could not open file " << path << endl;
+			cerr << "Error: Could not open file " << filename << endl;
 			return;
 		}
 
@@ -64,6 +64,10 @@ public:
 		m_size = m_img.tellg();
 		m_img.seekg(0, std::ios::beg);
 	}
+
+	PNG(const string filename, const string output_path)
+		: PNG(filename.c_str(), output_path.c_str())
+	{ }
 
 	void convert()
 	{
@@ -90,22 +94,14 @@ private:
 	void output()
 	{
 		// get parent directory of output file
-		string dir = string(static_cast<const char*>(out_txt));
-		dir = dir.substr(0, dir.find_last_of("\\"));
+		string dir = m_output_path;
 		std::filesystem::create_directory(dir);
 
-		ofstream out(this->out_txt);
-		ofstream html(this->out_html);
-		if (!out)
-		{
-			cerr << "Error: Could not open file " << this->out_txt << endl;
-			return;
-		}
-		if (!html)
-		{
-			cerr << "Error: Could not open file " << this->out_html << endl;
-			return;
-		}
+		string out_txt = dir + "\\output.txt";
+		string out_html = dir + "\\output.html";
+
+		ofstream out(out_txt);
+		ofstream html(out_html);
 
 		html << "<!DOCTYPE html>\n"
 				"<html class='scrollable' style='background-color: black; '>\n"
@@ -113,7 +109,7 @@ private:
 				"		<title>PNG to TXT</title>\n"
 				"	</head>\n"
 				"	<body>\n"
-				"		<pre style=\"line-height:8px; font-size: 6px\">\n";
+				"		<pre style=\"line-height:8px; font-size: 8px;\">\n";
 
 		size_t i = 0;
 		for (size_t y = 0; y < m_height; ++y)
@@ -127,7 +123,8 @@ private:
 								+ rgba_to_color(m_color_data[i])
 								+ ";font-size-adjust:1;'>"
 								//+ ";letter-spacing: 2px;'>"
-					 << m_output[i] << m_output[i]
+					 << m_output[i] 
+					 //<< m_output[i]
 					 //<< "¡ö"
 					 << string("</span>");
 				i++;
@@ -147,7 +144,7 @@ private:
 		out.close();
 		html.close();
 		
-		cout << "Output(" << dec << m_output.size() << " bytes) written to " << this->out_txt << endl;
+		cout << "Output(" << dec << m_output.size() << " bytes) written to " << out_html << endl;
 
 		return;
 	}
@@ -757,9 +754,6 @@ private:
 	}
 
 public:
-	constexpr static const char* img	  = "G:\\Projects\\png2txt\\png2txt\\input\\input_noa.png";
-	constexpr static const char* out_txt  = "G:\\Projects\\png2txt\\png2txt\\output\\output.txt";
-	constexpr static const char* out_html = "G:\\Projects\\png2txt\\png2txt\\output\\output.html";
 	constexpr static size_t buffer_size = 1 << 10 << 7; // 128KB
 
 private:
@@ -812,6 +806,8 @@ private:
 	};
 
 private:
+	string m_output_path;
+
 	ifstream m_img;
 	byte_array m_buffer;			// buffer for reading
 

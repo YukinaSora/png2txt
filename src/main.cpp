@@ -1,8 +1,13 @@
 import Module;
+import std;
 
-int main()
+int main(int argc, char** argv, char** env)
 {
-	PNG png{ "G:\\Projects\\png2txt\\png2txt\\input\\input_yuzu.png" };
+	if (argc < 3) {
+		std::cout << "Usage: png2txt <input file> <output path>" << std::endl;
+		return 1;
+	}
+	PNG png{ argv[1], argv[2]};
 	png.convert();
 
 	return 0;
