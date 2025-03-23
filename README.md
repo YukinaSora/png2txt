@@ -32,9 +32,9 @@ png2txt -f <输入文件> [选项]
 | `--help`               | `-h` |      | 显示帮助信息              |
 | `--filename <文件>`    | `-f` | 是   | 输入 PNG 文件路径         |
 | `--output_path <路径>` | `-o` |      | 输出目录 (默认: 当前目录) |
-| `--txt`                |      |      | 生成 TXT 文件             |
-| `--html`               |      |      | 生成 HTML 文件            |
-| `--canvas`             |      |      | 生成 Canvas 版本          |
+| `--txt`                |      |      | 生成灰度图像的 ascii txt 文件             |
+| `--html`               |      |      | 生成彩色图像的 ascii html 文件            |
+| `--canvas`             |      |      | 生成彩色像素图像的 Canvas html 文件          |
 
 ------
 
