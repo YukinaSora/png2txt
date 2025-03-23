@@ -59,7 +59,7 @@ png2txt -f input.png -o ./output/ --canvas
 ### 依赖项
 
 - C++20 编译器 (GCC 11+/Clang 14+/MSVC 2022+)
-- libpng 1.6+
+- zlib 1.3.1+
 - CMake 3.20+
 
 ------
