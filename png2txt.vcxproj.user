@@ -4,10 +4,10 @@
     <LocalDebuggerEnvironment>PATH=$(SOlutionDir)lib
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>$(SolutionDir)input\input_200x112.png $(SolutionDir)output</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f $(SolutionDir)input\input_yuzu_full.png -o $(SolutionDir)output --txt --canvas</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>$(SolutionDir)input\input_200x112.png $(SolutionDir)output</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f $(SolutionDir)input\input_yuzu_full.png -o $(SolutionDir)output --txt --canvas</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=$(SOlutionDir)lib
 </LocalDebuggerEnvironment>
