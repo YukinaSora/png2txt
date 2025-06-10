@@ -70,6 +70,12 @@ png2txt -f input.png -o ./output/ --canvas
 
 ------
 
+## 第三方库
+
+
+zlib
+------
+
 ## 开源协议
 
 GPL-3.0
